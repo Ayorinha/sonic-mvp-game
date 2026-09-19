@@ -1,11 +1,130 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sonic MVP Game — Learning Prototype</title>
-<style>body{margin:0;background:#081522;color:#fff;font:16px system-ui;text-align:center}canvas{max-width:95vw;border:1px solid #18c6d8;margin:20px auto;display:block}</style>
-<h1>Runner MVP</h1><p>Learning prototype — original assets only.</p>
-<canvas id="game" width="800" height="360"></canvas>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#07152f">
+<title>Ayorai Speed Run</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07152f;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none}
+body{display:grid;place-items:center}
+#wrap{position:relative;width:100vw;height:100vh;overflow:hidden;background:#07152f}
+canvas{display:block;width:100%;height:100%;image-rendering:auto}
+#loading{position:absolute;inset:0;display:grid;place-items:center;color:#dff8ff;font-weight:800;letter-spacing:.08em;background:linear-gradient(135deg,#06122b,#0b5f86);z-index:5}
+#loading.hide{display:none}
+#touch{position:absolute;inset:auto 0 0;display:flex;justify-content:space-between;align-items:end;padding:18px max(18px,env(safe-area-inset-left)) max(18px,env(safe-area-inset-bottom));pointer-events:none}
+.pad,.actions{display:flex;gap:12px;pointer-events:auto}
+.btn{width:64px;height:64px;border:1px solid rgba(255,255,255,.32);border-radius:20px;background:rgba(4,16,42,.48);backdrop-filter:blur(8px);color:#fff;font-size:24px;font-weight:900;box-shadow:0 8px 28px rgba(0,0,0,.25);user-select:none;-webkit-user-select:none}
+.btn:active{transform:scale(.94);background:rgba(20,170,220,.65)}
+@media (min-width:800px){#touch{opacity:.65}.btn{width:58px;height:58px}}
+</style>
+</head>
+<body>
+<div id="wrap">
+<div id="loading">AYORAI SPEED RUN · CARREGANDO</div>
+<canvas id="game"></canvas>
+<div id="touch">
+  <div class="pad"><button class="btn" data-k="left">◀</button><button class="btn" data-k="right">▶</button></div>
+  <div class="actions"><button class="btn" data-k="jump">⬆</button><button class="btn" data-k="dash">⚡</button></div>
+</div>
+</div>
 <script>
-const c=document.getElementById("game"),x=c.getContext("2d");let px=80,py=280,vy=0,score=0,ob=[];
-function jump(){if(py>=280)vy=-11}addEventListener("keydown",e=>{if(e.code==="Space")jump()});c.onclick=jump;
-function loop(){x.clearRect(0,0,800,360);x.fillStyle="#123";x.fillRect(0,0,800,360);x.fillStyle="#1dd";x.fillRect(0,320,800,40);vy+=.5;py+=vy;if(py>280){py=280;vy=0}if(Math.random()<.025)ob.push({x:800});ob.forEach(o=>o.x-=6);ob=ob.filter(o=>o.x>-30);x.fillStyle="#4af";x.beginPath();x.arc(px,py,22,0,7);x.fill();x.fillStyle="#f66";ob.forEach(o=>x.fillRect(o.x,285,25,35));x.fillStyle="#fff";x.fillText("Score: "+(++score),20,30);requestAnimationFrame(loop)}loop();
+(() => {
+"use strict";
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d"),loading=document.getElementById("loading");
+let W=1280,H=720,DPR=1,scale=1,ox=0,oy=0;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;scale=Math.min(W/1280,H/720);ox=(W-1280*scale)/2;oy=(H-720*scale)/2;ctx.setTransform(DPR*scale,0,0,DPR*scale,DPR*ox,DPR*oy)}
+addEventListener("resize",resize);resize();
+
+const input={left:false,right:false,jump:false,dash:false};
+addEventListener("keydown",e=>{if(["ArrowLeft","ArrowRight","ArrowUp","Space","Shift","KeyA","KeyD","KeyW"].includes(e.code))e.preventDefault();if(e.code==="ArrowLeft"||e.code==="KeyA")input.left=true;if(e.code==="ArrowRight"||e.code==="KeyD")input.right=true;if(e.code==="ArrowUp"||e.code==="Space"||e.code==="KeyW")input.jump=true;if(e.code==="ShiftLeft"||e.code==="ShiftRight")input.dash=true});
+addEventListener("keyup",e=>{if(e.code==="ArrowLeft"||e.code==="KeyA")input.left=false;if(e.code==="ArrowRight"||e.code==="KeyD")input.right=false;if(e.code==="ArrowUp"||e.code==="Space"||e.code==="KeyW")input.jump=false;if(e.code==="ShiftLeft"||e.code==="ShiftRight")input.dash=false});
+document.querySelectorAll(".btn").forEach(b=>{const k=b.dataset.k;const on=e=>{e.preventDefault();input[k]=true};const off=e=>{e.preventDefault();input[k]=false};b.addEventListener("pointerdown",on);b.addEventListener("pointerup",off);b.addEventListener("pointercancel",off);b.addEventListener("pointerleave",off)});
+
+const world={speed:6,ground:560,cam:0,score:0,rings:0,distance:0,particles:[],ringsObj:[],obstacles:[],clouds:[],started:true};
+const player={x:250,y:480,vx:0,vy:0,r:34,onGround:false,jumpLock:false,dash:0,face:1,spin:0};
+for(let i=0;i<18;i++)world.clouds.push({x:i*190+Math.random()*100,y:90+Math.random()*170,s:0.6+Math.random()*.8});
+for(let i=0;i<45;i++)world.ringsObj.push({x:500+i*145+(i%4)*20,y:450-(i%3)*65,got:false});
+for(let i=0;i<16;i++)world.obstacles.push({x:820+i*390+(i%3)*80,w:38+((i%2)*18),h:38+(i%3)*12});
+
+function rr(x,y,w,h,r){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function circle(x,y,r){ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+function particle(x,y,vx,vy,color,life,size){world.particles.push({x,y,vx,vy,color,life,max:life,size})}
+function drawSky(){
+ const g=ctx.createLinearGradient(0,0,0,720);g.addColorStop(0,"#62d9ff");g.addColorStop(.55,"#b9f3ff");g.addColorStop(1,"#e8fbff");ctx.fillStyle=g;ctx.fillRect(0,0,1280,720);
+ ctx.fillStyle="rgba(255,255,255,.9)";circle(1060,105,48);ctx.fillStyle="rgba(255,255,255,.55)";circle(1090,105,25);
+ world.clouds.forEach(c=>{let x=((c.x-world.cam*.18)%1500+1500)%1500-110;ctx.fillStyle="rgba(255,255,255,.72)";circle(x,c.y,28*c.s);circle(x+30*c.s,c.y-13*c.s,38*c.s);circle(x+67*c.s,c.y+3*c.s,24*c.s)});
+ // distant mountains
+ ctx.fillStyle="#72c7b0";ctx.beginPath();ctx.moveTo(0,430);for(let x=0;x<=1280;x+=80)ctx.lineTo(x,300+Math.sin((x+world.cam*.08)*.012)*70);ctx.lineTo(1280,560);ctx.lineTo(0,560);ctx.fill();
+ ctx.fillStyle="#4aa890";ctx.beginPath();ctx.moveTo(0,480);for(let x=0;x<=1280;x+=90)ctx.lineTo(x,350+Math.cos((x+world.cam*.12)*.009)*65);ctx.lineTo(1280,580);ctx.lineTo(0,580);ctx.fill();
+}
+function drawGround(){
+ ctx.fillStyle="#1e8f55";ctx.fillRect(0,550,1280,170);
+ ctx.fillStyle="#47c96b";ctx.fillRect(0,550,1280,16);
+ for(let x=-80;x<1400;x+=70){ctx.fillStyle=x%140?"#197b49":"#236f45";ctx.fillRect(x,566,45,154)}
+ // checker path
+ for(let x=-100;x<1400;x+=90){ctx.fillStyle="rgba(255,255,255,.06)";ctx.fillRect(x,610,45,110)}
+}
+function drawPalm(x,y,s){
+ ctx.strokeStyle="#7b4b27";ctx.lineWidth=12*s;ctx.beginPath();ctx.moveTo(x,y+100*s);ctx.quadraticCurveTo(x-10*s,y+40*s,x+8*s,y);ctx.stroke();
+ ctx.fillStyle="#19a85e";for(let a=-1.2;a<=1.2;a+=.4){ctx.save();ctx.translate(x+8*s,y);ctx.rotate(a);ctx.beginPath();ctx.ellipse(35*s,0,55*s,12*s,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+}
+function drawRing(x,y){
+ ctx.strokeStyle="#ffd83d";ctx.lineWidth=9;ctx.beginPath();ctx.arc(x,y,19,0,Math.PI*2);ctx.stroke();ctx.strokeStyle="#fff3a1";ctx.lineWidth=3;ctx.beginPath();ctx.arc(x-3,y-4,12,-2.5,-.5);ctx.stroke();
+}
+function drawCharacter(){
+ const x=player.x-world.cam,y=player.y,flip=player.face<0?-1:1;ctx.save();ctx.translate(x,y);ctx.scale(flip,1);ctx.rotate(player.spin);
+ // speed aura
+ if(Math.abs(player.vx)>5){ctx.strokeStyle="rgba(255,255,255,.35)";ctx.lineWidth=5;for(let i=0;i<3;i++){ctx.beginPath();ctx.moveTo(-42-i*12,10+i*9);ctx.lineTo(-78-i*15,10+i*9);ctx.stroke()}}
+ // shoes
+ ctx.fillStyle="#d92d35";rr(-30,24,35,18,9);rr(8,24,35,18,9);ctx.fillStyle="#fff";ctx.fillRect(-28,28,31,5);ctx.fillRect(10,28,31,5);
+ // body
+ ctx.fillStyle="#1478ee";circle(0,0,31);ctx.fillStyle="#f6c6a1";ctx.beginPath();ctx.ellipse(8,6,22,20,0,0,Math.PI*2);ctx.fill();
+ // quills
+ ctx.fillStyle="#0864d8";ctx.beginPath();ctx.moveTo(-12,-18);ctx.lineTo(-58,-45);ctx.lineTo(-33,-8);ctx.lineTo(-65,-12);ctx.lineTo(-27,5);ctx.lineTo(-51,22);ctx.lineTo(-8,17);ctx.closePath();ctx.fill();
+ // eye
+ ctx.fillStyle="#fff";ctx.beginPath();ctx.ellipse(16,-13,11,15,0,0,Math.PI*2);ctx.fill();ctx.fillStyle="#14213d";circle(19,-11,5);
+ ctx.restore();
+}
+function spawnBurst(x,y){for(let i=0;i<10;i++)particle(x,y,(Math.random()-.5)*6,(Math.random()-.8)*6,"#ffe04b",35,3)}
+function update(){
+ const accel=input.dash?0.62:0.42, max=input.dash?12:8;
+ if(input.left){player.vx-=accel;player.face=-1}
+ if(input.right){player.vx+=accel;player.face=1}
+ if(!input.left&&!input.right)player.vx*=.88;
+ player.vx=Math.max(-max,Math.min(max,player.vx));
+ if(input.jump&&!player.jumpLock&&player.onGround){player.vy=-15;player.onGround=false;player.jumpLock=true;spawnBurst(player.x,player.y+25)}
+ if(!input.jump)player.jumpLock=false;
+ if(input.dash&&!player.onGround&&player.dash<=0){player.vx+=player.face*5;player.vy*=.65;player.dash=28}
+ if(player.dash>0)player.dash--;
+ player.vy+=.72;player.x+=player.vx;player.y+=player.vy;
+ if(player.y>=world.ground-34){player.y=world.ground-34;player.vy=0;player.onGround=true}
+ else player.onGround=false;
+ if(player.x<60)player.x=60;
+ world.cam=Math.max(0,player.x-300);
+ world.distance=Math.max(world.distance,Math.floor(player.x/10));
+ world.ringsObj.forEach(r=>{if(!r.got&&Math.hypot(player.x-r.x,player.y-r.y)<42){r.got=true;world.rings++;world.score+=100;spawnBurst(r.x,r.y)}});
+ world.obstacles.forEach(o=>{if(Math.abs(player.x-o.x)<o.w+28&&player.y>world.ground-o.h-42){if(Math.abs(player.vy)<5){world.rings=Math.max(0,world.rings-5);player.x-=35;player.vx=-5;spawnBurst(player.x,player.y)}}});
+ world.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.12;p.life--});world.particles=world.particles.filter(p=>p.life>0);
+ if(Math.abs(player.vx)>1&&Math.random()<.25)particle(player.x-25,player.y+25,(-player.vx)*.15,-.3,"rgba(255,255,255,.55)",20,2);
+ player.spin=player.onGround?0:player.spin+.12;
+}
+function draw(){
+ ctx.clearRect(0,0,1280,720);drawSky();
+ // scenery
+ for(let i=-1;i<14;i++){let x=i*210-(world.cam*.35%210);drawPalm(x,410+(i%2)*35,.75+(i%3)*.15)}
+ drawGround();
+ world.ringsObj.forEach(r=>{if(!r.got&&r.x-world.cam>-30&&r.x-world.cam<1310)drawRing(r.x-world.cam,r.y)});
+ world.obstacles.forEach(o=>{let x=o.x-world.cam;if(x>-60&&x<1340){ctx.fillStyle="#a73537";rr(x-o.w/2,world.ground-o.h,o.w,o.h,8);ctx.fillStyle="#ffd34a";ctx.fillRect(x-o.w/2,world.ground-o.h,o.w,7);}});
+ world.particles.forEach(p=>{ctx.globalAlpha=Math.max(0,p.life/p.max);ctx.fillStyle=p.color;circle(p.x-world.cam,p.y,p.size);ctx.globalAlpha=1});
+ drawCharacter();
+ // HUD
+ ctx.fillStyle="rgba(4,16,42,.62)";rr(24,22,330,78,22);ctx.fillStyle="#fff";ctx.font="800 22px system-ui";ctx.fillText("AYORAI SPEED RUN",45,52);ctx.font="700 17px system-ui";ctx.fillStyle="#ffe04b";ctx.fillText("💎 "+world.rings,45,80);ctx.fillStyle="#fff";ctx.fillText("SCORE "+world.score,145,80);ctx.fillText("DIST "+world.distance+"m",250,80);
+ ctx.fillStyle="rgba(4,16,42,.45)";rr(930,22,326,54,18);ctx.fillStyle="#fff";ctx.font="600 16px system-ui";ctx.fillText("← → mover   •   ⬆ pular   •   ⚡ dash",950,56);
+}
+function loop(){update();draw();requestAnimationFrame(loop)}
+loading.classList.add("hide");loop();
+})();
 </script>
+</body>
+</html>

@@ -24,8 +24,9 @@ button:active{transform:scale(.92);background:#078dffb8}.boost{border-color:#7ee
 <div id="hud"><div class="card">🌀 AYORAI 3D</div><div class="card">💍 <span id="rings">0</span> · ⭐ <span id="score">0</span></div></div>
 <div id="controls"><div class="group"><button data-k="left">◀</button><button data-k="right">▶</button></div><div class="group"><button class="jump" data-k="jump">⬆</button><button class="boost" data-k="boost">⚡</button></div></div>
 <div id="start"><div class="panel"><h1>AYORAI 3D</h1><p>Terceira pessoa. O velocista fica grande na sua frente enquanto a câmera acompanha de cima. Corra, pule, use o boost e colete anéis.</p><button class="play" id="play">JOGAR</button></div></div>
-<script type="module">
-import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js";
+<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
+<script>
+const THREE = window.THREE;
 const canvas=document.getElementById("game"),R=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
 R.setPixelRatio(Math.min(devicePixelRatio||1,1.6));R.setSize(innerWidth,innerHeight);R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;
 const S=new THREE.Scene();S.background=new THREE.Color(0x6fd8ff);S.fog=new THREE.Fog(0x6fd8ff,55,240);

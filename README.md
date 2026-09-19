@@ -1,51 +1,23 @@
 # Sonic MVP Game
 
-> Game development learning project created during Hub Games training.
+A self-contained browser game-development learning prototype. The repository now contains a minimal playable runner built without proprietary assets.
 
-## Overview
+## Run
 
-This repository is an experimental game-development project focused on learning the fundamentals of game production, gameplay logic, scene design and interactive systems.
+Open `index.html` directly in a browser, or serve the folder locally:
 
-The project is intentionally presented as a **learning and portfolio experiment**, separate from the core Ayorai Applied AI portfolio.
+```bash
+python -m http.server 8080
+```
 
-## Learning Goals
+Then open `http://localhost:8080`.
 
-- Understand game-development workflows.
-- Practice gameplay programming and interactive logic.
-- Explore game architecture and asset organization.
-- Build and iterate on a playable MVP.
-- Document technical decisions and lessons learned.
+**Controls:** Space or click to jump.
 
-## Context
+## Scope
 
-Developed as part of the user's learning path in game development through **Hub Games**.
-
-The repository should remain focused on the technical learning process rather than presenting the project as a production game or an official Sonic product.
-
-## Portfolio Positioning
-
-This project complements the main portfolio by demonstrating the ability to learn and work across another engineering domain: **interactive software and game development**.
-
-Core professional focus remains:
-
-- Applied AI
-- Data Science
-- Document Intelligence
-- Intelligent Automation
-- Data Engineering
-
-## Status
-
-**Learning project / MVP in development.**
-
-## Notes
-
-This repository should contain only assets and code that can be legally published. Do not commit proprietary game assets, licensed materials, credentials or private course materials.
+This is a learning project, not an official Sonic product and not part of the core AYORAI AI portfolio.
 
 ## Author
 
-**Anderson Leon Ayora**  
-AI Engineer · Data Scientist · Data Architect
-
-GitHub: https://github.com/Ayorinha  
-LinkedIn: https://www.linkedin.com/in/anderson-leon-ayora
+**Anderson Leon Ayora** — AI Engineer · Data Scientist · Data Architect

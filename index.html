@@ -1,11 +1,115 @@
 <!doctype html>
-<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sonic MVP Game — Learning Prototype</title>
-<style>body{margin:0;background:#081522;color:#fff;font:16px system-ui;text-align:center}canvas{max-width:95vw;border:1px solid #18c6d8;margin:20px auto;display:block}</style>
-<h1>Runner MVP</h1><p>Learning prototype — original assets only.</p>
-<canvas id="game" width="800" height="360"></canvas>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Sonic Adventure MVP — Fan Game</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#061426;font-family:Inter,system-ui,sans-serif}body{display:flex;align-items:center;justify-content:center}#game{width:100vw;height:100vh}canvas{display:block}</style>
+</head><body><div id="game"></div>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.90.0/dist/phaser.min.js"></script>
 <script>
-const c=document.getElementById("game"),x=c.getContext("2d");let px=80,py=280,vy=0,score=0,ob=[];
-function jump(){if(py>=280)vy=-11}addEventListener("keydown",e=>{if(e.code==="Space")jump()});c.onclick=jump;
-function loop(){x.clearRect(0,0,800,360);x.fillStyle="#123";x.fillRect(0,0,800,360);x.fillStyle="#1dd";x.fillRect(0,320,800,40);vy+=.5;py+=vy;if(py>280){py=280;vy=0}if(Math.random()<.025)ob.push({x:800});ob.forEach(o=>o.x-=6);ob=ob.filter(o=>o.x>-30);x.fillStyle="#4af";x.beginPath();x.arc(px,py,22,0,7);x.fill();x.fillStyle="#f66";ob.forEach(o=>x.fillRect(o.x,285,25,35));x.fillStyle="#fff";x.fillText("Score: "+(++score),20,30);requestAnimationFrame(loop)}loop();
-</script>
+const W=1280,H=720;
+const phases=[
+{name:"GREEN HILL",sky:0x5cc8ff,ground:0x24a94b,length:6200,speed:330},
+{name:"SKY RUINS",sky:0x7668d8,ground:0x5b4a9d,length:7000,speed:380},
+{name:"NEON CITY",sky:0x101b48,ground:0x12a7b0,length:7800,speed:430}];
+
+class Game extends Phaser.Scene{
+constructor(){super("Game");this.phaseIndex=0;this.score=0;this.rings=0;this.lives=3;this.kite=false;this.kiteTime=0;this.invuln=0}
+create(){
+this.makeTextures();
+this.player=this.physics.add.sprite(220,470,"sonic").setSize(54,86).setOffset(22,18);
+this.player.body.setGravityY(950).setMaxVelocity(900,1200).setDragX(420);
+this.platforms=this.physics.add.staticGroup();
+this.ringsGroup=this.physics.add.group({allowGravity:false,immovable:true});
+this.enemies=this.physics.add.group({allowGravity:false,immovable:true});
+this.obstacles=this.physics.add.staticGroup();
+this.projectileGroup=this.physics.add.group({allowGravity:false});
+this.buildPhase();
+this.physics.add.collider(this.player,this.platforms);
+this.physics.add.overlap(this.player,this.ringsGroup,(p,r)=>{r.destroy();this.rings++;this.score+=100});
+this.physics.add.overlap(this.player,this.enemies,()=>this.hitEnemy());
+this.physics.add.collider(this.player,this.obstacles,()=>this.hitEnemy());
+this.physics.add.overlap(this.projectileGroup,this.enemies,(b,e)=>{b.destroy();e.destroy();this.score+=250});
+this.cursors=this.input.keyboard.createCursorKeys();
+this.keys=this.input.keyboard.addKeys("A,D,W,SPACE,SHIFT,Q,E,R");
+this.createHUD();this.createTouchControls();this.showIntro();
+}
+makeTextures(){
+let g=this.make.graphics({add:false});
+g.fillStyle(0x1267e8);g.fillCircle(55,52,39);
+g.fillTriangle(24,34,2,8,38,25);g.fillTriangle(32,28,14,0,49,20);g.fillTriangle(43,23,37,0,60,18);
+g.fillStyle(0x0b4fc4);g.fillEllipse(43,45,26,18);g.fillStyle(0xffffff);g.fillEllipse(67,51,30,22);g.fillStyle(0x171b26);g.fillCircle(73,49,4);g.fillCircle(66,48,4);
+g.fillStyle(0xffffff);g.fillEllipse(48,79,27,13);g.fillStyle(0xe52d3f);
+g.fillRoundedRect(26,91,30,13,5);g.fillRoundedRect(61,91,30,13,5);
+g.generateTexture("sonic",112,112);g.destroy();
+g=this.make.graphics({add:false});g.fillStyle(0xffd83d);g.fillCircle(14,14,14);g.lineStyle(3,0xffffff);g.strokeCircle(14,14,11);g.generateTexture("ring",28,28);g.destroy();
+g=this.make.graphics({add:false});g.fillStyle(0xe63b45);g.fillRoundedRect(2,10,42,28,9);g.fillStyle(0x24283a);g.fillCircle(13,24,5);g.fillCircle(33,24,5);g.generateTexture("enemy",46,48);g.destroy();
+g=this.make.graphics({add:false});g.fillStyle(0x273448);g.fillRoundedRect(0,0,42,58,8);g.fillStyle(0x74e6ff);g.fillRect(6,7,30,5);g.generateTexture("obstacle",42,58);g.destroy();
+g=this.make.graphics({add:false});g.fillStyle(0x6ff6ff);g.fillCircle(12,12,12);g.lineStyle(3,0xffffff);g.strokeCircle(12,12,8);g.generateTexture("ball",24,24);g.destroy();
+}
+buildPhase(){
+const cfg=phases[this.phaseIndex];
+this.platforms.clear(true,true);this.ringsGroup.clear(true,true);this.enemies.clear(true,true);this.obstacles.clear(true,true);this.projectileGroup.clear(true,true);
+this.physics.world.setBounds(0,0,cfg.length,H);this.cameras.main.setBounds(0,0,cfg.length,H);
+this.player.setPosition(220,470).setVelocity(0,0);this.drawBackground(cfg);
+for(let x=0;x<cfg.length;x+=360){
+const y=550-Math.sin(x/420)*55;
+const p=this.platforms.create(x+180,y,"obstacle");p.setVisible(false);p.body.setSize(360,60);
+for(let j=0;j<5;j++)this.ringsGroup.create(x+95+j*42,y-95-(j%2)*28,"ring");
+if(x>500&&x<cfg.length-700)this.enemies.create(x+280,y-70,"enemy");
+if(x>900&&x<cfg.length-400&&x%720===0)this.obstacles.create(x+120,y-29,"obstacle");
+}
+this.spawnGoal(cfg.length-250,470);this.cameras.main.startFollow(this.player,true,.08,.08);
+this.cameras.main.setZoom(Math.min(window.innerWidth/W,window.innerHeight/H));this.phaseText.setText(`FASE ${this.phaseIndex+1}/3 • ${cfg.name}`);
+}
+drawBackground(cfg){
+if(this.bg)this.bg.destroy();this.bg=this.add.graphics().setScrollFactor(.15);
+this.bg.fillStyle(cfg.sky);this.bg.fillRect(0,0,cfg.length+W,H);this.bg.fillStyle(cfg.ground);for(let i=0;i<cfg.length;i+=360){const y=550-Math.sin(i/420)*55;this.bg.fillRect(i,y,cfg.length>0?360:360,H-y);}
+for(let i=0;i<cfg.length;i+=220){this.bg.fillStyle(this.phaseIndex===2?0x16265f:0x3b9cda);this.bg.fillCircle(i+100,190+(i%100),90)}
+const d=this.add.graphics().setScrollFactor(.35);
+for(let i=0;i<cfg.length;i+=300){d.fillStyle(this.phaseIndex===1?0xb7a8ff:0x1f8d72);d.fillTriangle(i,530,i+150,300,i+300,530)}
+}
+spawnGoal(x,y){
+if(this.goal)this.goal.destroy();this.goal=this.add.text(x,y-90,"★",{fontSize:"72px",color:"#fff700"}).setOrigin(.5);
+this.physics.world.enable(this.goal);this.goal.body.setAllowGravity(false);this.goal.body.setImmovable(true);this.goal.body.setSize(80,80);
+this.physics.add.overlap(this.player,this.goal,()=>this.nextPhase());
+}
+createHUD(){
+this.ui=this.add.container(0,0).setScrollFactor(0).setDepth(50);
+const p=this.add.rectangle(18,18,500,72,0x061426,.84).setOrigin(0).setStrokeStyle(2,0x55e8ff);
+this.phaseText=this.add.text(34,30,"FASE 1/3",{fontSize:"20px",fontStyle:"bold",color:"#6ff6ff"});
+this.stats=this.add.text(34,57,"RINGS 0   SCORE 0   ❤️ 3",{fontSize:"18px",color:"#fff"});this.ui.add([p,this.phaseText,this.stats]);
+}
+createTouchControls(){
+const make=(x,label,fn)=>{const b=this.add.circle(x,H-70,46,0x061426,.72).setScrollFactor(0).setDepth(60).setStrokeStyle(2,0x6ff6ff);this.add.text(x,H-70,label,{fontSize:"22px",color:"#fff",fontStyle:"bold"}).setOrigin(.5).setScrollFactor(0).setDepth(61);b.setInteractive().on("pointerdown",fn)};
+make(70,"←",()=>this.player.setVelocityX(-phases[this.phaseIndex].speed));make(170,"→",()=>this.player.setVelocityX(phases[this.phaseIndex].speed));make(W-250,"JUMP",()=>this.jump());make(W-160,"BALL",()=>this.throwBall());make(W-70,"KITE",()=>this.useKite());
+}
+showIntro(){
+const a=this.add.rectangle(0,0,W,H,0x020713,.76).setOrigin(0).setScrollFactor(0).setDepth(100);
+const t=this.add.text(W/2,145,"SONIC ADVENTURE MVP",{fontSize:"52px",fontStyle:"bold",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(101);
+const s=this.add.text(W/2,220,"CORRA • PULE • ROLE • JOGUE BOLA • SOLTE A PIPA",{fontSize:"20px",color:"#6ff6ff"}).setOrigin(.5).setScrollFactor(0).setDepth(101);
+const h=this.add.text(W/2,320,"← → correr   SPACE/W pular   SHIFT rolar   Q bola   E pipa",{fontSize:"22px",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(101);
+const b=this.add.text(W/2,440,"▶  COMEÇAR",{fontSize:"30px",fontStyle:"bold",backgroundColor:"#1469e8",padding:{x:28,y:16},color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(101).setInteractive();
+b.on("pointerdown",()=>[a,t,s,h,b].forEach(o=>o.destroy()));
+}
+jump(){if(this.player.body.blocked.down||this.player.y>480)this.player.setVelocityY(-620)}
+roll(){if(!this.player.body.blocked.down)return;this.player.setVelocityX(phases[this.phaseIndex].speed*1.45);this.player.setTint(0x9edcff);this.time.delayedCall(260,()=>this.player.clearTint())}
+throwBall(){const b=this.projectileGroup.create(this.player.x+45,this.player.y-8,"ball");b.setVelocityX(phases[this.phaseIndex].speed*1.8)}
+useKite(){if(this.kite)return;this.kite=true;this.kiteTime=0;this.player.body.setGravityY(260);this.player.setTint(0x8ef7ff);this.kiteGraphic=this.add.graphics().setDepth(5)}
+update(time,delta){
+const c=phases[this.phaseIndex];
+if(this.cursors.left.isDown||this.keys.A.isDown)this.player.setVelocityX(-c.speed);else if(this.cursors.right.isDown||this.keys.D.isDown)this.player.setVelocityX(c.speed);else if(this.player.body.blocked.down)this.player.setVelocityX(Math.max(0,this.player.body.velocity.x-20));
+if(Phaser.Input.Keyboard.JustDown(this.cursors.up)||Phaser.Input.Keyboard.JustDown(this.keys.W)||Phaser.Input.Keyboard.JustDown(this.keys.SPACE))this.jump();
+if(Phaser.Input.Keyboard.JustDown(this.keys.SHIFT))this.roll();if(Phaser.Input.Keyboard.JustDown(this.keys.Q))this.throwBall();if(Phaser.Input.Keyboard.JustDown(this.keys.E))this.useKite();if(Phaser.Input.Keyboard.JustDown(this.keys.R))location.reload();
+if(this.kite){this.kiteTime+=delta;this.player.body.setVelocityY(Math.sin(this.kiteTime/300)*70-40);this.drawKite()}
+if(this.player.y>H+100){this.lives--;this.respawn()}if(this.invuln>0)this.invuln-=delta;
+this.player.angle=this.player.body.velocity.x>600?Math.sin(time/45)*8:0;this.stats.setText(`RINGS ${this.rings}   SCORE ${this.score}   ❤️ ${this.lives}`);
+}
+drawKite(){if(!this.kiteGraphic)return;this.kiteGraphic.clear();this.kiteGraphic.lineStyle(4,0xffffff,.85);this.kiteGraphic.lineBetween(this.player.x,this.player.y-25,this.player.x-20,this.player.y-150);this.kiteGraphic.fillStyle(0xff4f91,.9);this.kiteGraphic.fillTriangle(this.player.x-20,this.player.y-150,this.player.x+100,this.player.y-120,this.player.x+20,this.player.y-70)}
+hitEnemy(){if(this.invuln>0)return;if(this.rings>0){this.rings=Math.max(0,this.rings-10);this.invuln=1200;this.player.setTint(0xffb3b3);this.player.setVelocityY(-300)}else{this.lives--;this.respawn()}}
+respawn(){this.player.setPosition(Math.max(220,this.player.x-500),450).setVelocity(0,0);this.invuln=1400;if(this.lives<=0){this.lives=3;this.score=0;this.rings=0;this.phaseIndex=0;this.buildPhase()}}
+nextPhase(){if(this.phaseIndex<2){this.phaseIndex++;this.score+=1000;this.kite=false;if(this.kiteGraphic)this.kiteGraphic.destroy();this.player.body.setGravityY(950);this.player.clearTint();this.buildPhase()}else this.win()}
+win(){const a=this.add.rectangle(0,0,W,H,0x020713,.78).setOrigin(0).setScrollFactor(0).setDepth(100);this.add.text(W/2,220,"YOU DID IT!",{fontSize:"64px",fontStyle:"bold",color:"#fff"}).setOrigin(.5).setScrollFactor(0).setDepth(101);this.add.text(W/2,310,`SCORE ${this.score} • RINGS ${this.rings}`,{fontSize:"26px",color:"#6ff6ff"}).setOrigin(.5).setScrollFactor(0).setDepth(101);const r=this.add.text(W/2,420,"↻ JOGAR NOVAMENTE",{fontSize:"28px",backgroundColor:"#1469e8",padding:{x:24,y:14}}).setOrigin(.5).setScrollFactor(0).setDepth(101).setInteractive();r.on("pointerdown",()=>location.reload())}
+}
+new Phaser.Game({type:Phaser.AUTO,width:W,height:H,parent:"game",scale:{mode:Phaser.Scale.RESIZE,autoCenter:Phaser.Scale.CENTER_BOTH},physics:{default:"arcade",arcade:{gravity:{y:0},debug:false}},scene:Game,render:{antialias:true,pixelArt:false}});
+</script></body></html>

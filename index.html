@@ -24,9 +24,15 @@ button:active{transform:scale(.92);background:#078dffb8}.boost{border-color:#7ee
 <div id="hud"><div class="card">🌀 AYORAI 3D</div><div class="card">💍 <span id="rings">0</span> · ⭐ <span id="score">0</span></div></div>
 <div id="controls"><div class="group"><button data-k="left">◀</button><button data-k="right">▶</button></div><div class="group"><button class="jump" data-k="jump">⬆</button><button class="boost" data-k="boost">⚡</button></div></div>
 <div id="start"><div class="panel"><h1>AYORAI 3D</h1><p>Terceira pessoa. O velocista fica grande na sua frente enquanto a câmera acompanha de cima. Corra, pule, use o boost e colete anéis.</p><button class="play" id="play">JOGAR</button></div></div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js"></script>
 <script>
+(async()=>{
+function loadScript(src){return new Promise((resolve,reject)=>{const s=document.createElement("script");s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+try{await loadScript("https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.min.js")}
+catch(e){try{await loadScript("https://unpkg.com/three@0.180.0/build/three.min.js")}catch(e2){document.getElementById("start").innerHTML='<div class="panel"><h1>AYORAI 3D</h1><p>O motor 3D não conseguiu carregar neste navegador. Verifique a conexão e recarregue a página.</p><button class="play" onclick="location.reload()">RECARREGAR</button></div>';throw e2}}
 const THREE = window.THREE;
+const AudioCtx=window.AudioContext||window.webkitAudioContext;let audio=null;
+function sound(freq,dur=.08,type="sine",gain=.035){if(!AudioCtx)return;if(!audio)audio=new AudioCtx();if(audio.state==="suspended")audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
+
 const canvas=document.getElementById("game"),R=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
 R.setPixelRatio(Math.min(devicePixelRatio||1,1.6));R.setSize(innerWidth,innerHeight);R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;
 const S=new THREE.Scene();S.background=new THREE.Color(0x6fd8ff);S.fog=new THREE.Fog(0x6fd8ff,55,240);
@@ -52,18 +58,19 @@ const I={left:false,right:false,jump:false,boost:false};let running=false,target
 function key(k,v){I[k]=v}addEventListener("keydown",e=>{if(["ArrowLeft","ArrowRight","ArrowUp","Space","ShiftLeft","ShiftRight","KeyA","KeyD","KeyW"].includes(e.code))e.preventDefault();if(e.code=="ArrowLeft"||e.code=="KeyA")key("left",1);if(e.code=="ArrowRight"||e.code=="KeyD")key("right",1);if(e.code=="ArrowUp"||e.code=="Space"||e.code=="KeyW")key("jump",1);if(e.code=="ShiftLeft"||e.code=="ShiftRight")key("boost",1)});
 addEventListener("keyup",e=>{if(e.code=="ArrowLeft"||e.code=="KeyA")key("left",0);if(e.code=="ArrowRight"||e.code=="KeyD")key("right",0);if(e.code=="ArrowUp"||e.code=="Space"||e.code=="KeyW")key("jump",0);if(e.code=="ShiftLeft"||e.code=="ShiftRight")key("boost",0)});
 document.querySelectorAll("[data-k]").forEach(b=>{const k=b.dataset.k,d=e=>{e.preventDefault();key(k,1)},u=e=>{e.preventDefault();key(k,0)};b.addEventListener("pointerdown",d);b.addEventListener("pointerup",u);b.addEventListener("pointercancel",u);b.addEventListener("pointerleave",u)});
-document.getElementById("play").onclick=()=>{running=true;document.getElementById("start").classList.add("hidden")};
+document.getElementById("play").onclick=()=>{running=true;document.getElementById("start").classList.add("hidden");sound(440,.12,"triangle",.05);};
 function update(dt){if(!running)return;t+=dt;if(I.left&&!pl)target=Math.max(-1,target-1);if(I.right&&!pr)target=Math.min(1,target+1);pl=I.left;pr=I.right;
 const tx=target*4.2;H.position.x+=(tx-H.position.x)*Math.min(1,dt*9);if(I.jump&&!pj&&grounded){vy=12;grounded=false}pj=I.jump;if(I.boost)boostT=Math.min(1,boostT+dt*3);else boostT=Math.max(0,boostT-dt*1.2);const boost=boostT>.05?.34:0;speed=Math.min(.9,speed+dt*.004)+boost;
 if(!grounded){vy-=29*dt;H.position.y+=vy*dt;if(H.position.y<=1.55){H.position.y=1.55;vy=0;grounded=true}}
 H.position.z-=speed*60*dt;score+=Math.floor(speed*dt*55);
 const run=Math.min(1,speed/1.0),step=Math.sin(t*18*run)*.18;if(grounded){H.children.forEach((o,i)=>{if(o.geometry?.type==="BoxGeometry"&&i>0)o.rotation.x=-.1+step*(i%2?1:-1)});H.rotation.y=Math.sin(t*12)*.025}
 if(boostT>.05){H.rotation.z=Math.sin(t*35)*.05}
-rings.forEach(r=>{if(r.visible){r.rotation.z+=dt*6;if(Math.abs(r.position.z-H.position.z)<1.7&&Math.abs(r.position.x-H.position.x)<1.5&&Math.abs(r.position.y-H.position.y)<1.8){r.visible=false;rc++;score+=100}}});
-obstacles.forEach(o=>{if(Math.abs(o.position.z-H.position.z)<1.4&&Math.abs(o.position.x-H.position.x)<1.4&&H.position.y<2.7){o.position.z-=15;speed=Math.max(.3,speed-.16);score=Math.max(0,score-120)}});
+rings.forEach(r=>{if(r.visible){r.rotation.z+=dt*6;if(Math.abs(r.position.z-H.position.z)<1.7&&Math.abs(r.position.x-H.position.x)<1.5&&Math.abs(r.position.y-H.position.y)<1.8){r.visible=false;rc++;score+=100;sound(880,.09,"sine",.045)}}});
+obstacles.forEach(o=>{if(Math.abs(o.position.z-H.position.z)<1.4&&Math.abs(o.position.x-H.position.x)<1.4&&H.position.y<2.7){o.position.z-=15;speed=Math.max(.3,speed-.16);score=Math.max(0,score-120);sound(120,.14,"sawtooth",.025)}});
 const bob=grounded?Math.sin(t*18)*.045:0;H.position.y+=(1.55+bob-H.position.y)*dt*5;
 C.position.x+=(H.position.x*.38-C.position.x)*dt*6;C.position.y+=(6.2-C.position.y)*dt*4;C.position.z+=(13.5-C.position.z)*dt*4;C.lookAt(H.position.x*.18,1.8,H.position.z-13);
 document.getElementById("score").textContent=score;document.getElementById("rings").textContent=rc}
 const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);update(Math.min(clock.getDelta(),.033));R.render(S,C)}loop();
 addEventListener("resize",()=>{R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()});
+})();
 </script></body></html>

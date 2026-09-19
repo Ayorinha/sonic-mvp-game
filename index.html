@@ -33,7 +33,21 @@ const THREE = window.THREE;
 const AudioCtx=window.AudioContext||window.webkitAudioContext;let audio=null;
 function sound(freq,dur=.08,type="sine",gain=.035){if(!AudioCtx)return;if(!audio)audio=new AudioCtx();if(audio.state==="suspended")audio.resume();const o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(gain,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}
 
-const canvas=document.getElementById("game"),R=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
+const canvas=document.getElementById("game");
+let R;
+try{
+  R=new THREE.WebGLRenderer({canvas,antialias:true,powerPreference:"high-performance"});
+}catch(err){
+  console.error("AYORAI 3D WebGL error:",err);
+  document.getElementById("start").innerHTML='<div class="panel"><h1>AYORAI 3D</h1><p>O navegador não conseguiu iniciar o WebGL. Isso é o que está causando a tela preta. Ative a aceleração gráfica/WebGL no navegador e toque em RECARREGAR.</p><button class="play" onclick="location.reload()">RECARREGAR</button></div>';
+  return;
+}
+R.domElement.addEventListener("webglcontextlost",e=>{
+  e.preventDefault();
+  document.getElementById("start").classList.remove("hidden");
+  document.getElementById("start").innerHTML='<div class="panel"><h1>AYORAI 3D</h1><p>A aceleração 3D foi perdida pelo navegador. Recarregue a página para restaurar o jogo.</p><button class="play" onclick="location.reload()">RECARREGAR</button></div>';
+});
+R.domElement.addEventListener("webglcontextrestored",()=>location.reload());
 R.setPixelRatio(Math.min(devicePixelRatio||1,1.6));R.setSize(innerWidth,innerHeight);R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;R.outputColorSpace=THREE.SRGBColorSpace;R.toneMapping=THREE.ACESFilmicToneMapping;
 const S=new THREE.Scene();S.background=new THREE.Color(0x6fd8ff);S.fog=new THREE.Fog(0x6fd8ff,55,240);
 const C=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,500);C.position.set(0,6.2,11.5);
@@ -70,7 +84,7 @@ obstacles.forEach(o=>{if(Math.abs(o.position.z-H.position.z)<1.4&&Math.abs(o.pos
 const bob=grounded?Math.sin(t*18)*.045:0;H.position.y+=(1.55+bob-H.position.y)*dt*5;
 C.position.x+=(H.position.x*.38-C.position.x)*dt*6;C.position.y+=(6.2-C.position.y)*dt*4;C.position.z+=(13.5-C.position.z)*dt*4;C.lookAt(H.position.x*.18,1.8,H.position.z-13);
 document.getElementById("score").textContent=score;document.getElementById("rings").textContent=rc}
-const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);update(Math.min(clock.getDelta(),.033));R.render(S,C)}loop();
+const clock=new THREE.Clock();function loop(){requestAnimationFrame(loop);try{update(Math.min(clock.getDelta(),.033));R.render(S,C)}catch(err){console.error("AYORAI render error:",err);document.getElementById("start").classList.remove("hidden");document.getElementById("start").innerHTML='<div class="panel"><h1>AYORAI 3D</h1><p>O motor 3D encontrou um erro neste navegador. Recarregue para tentar novamente.</p><button class="play" onclick="location.reload()">RECARREGAR</button></div>';return}}loop();
 addEventListener("resize",()=>{R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()});
 })();
 </script></body></html>

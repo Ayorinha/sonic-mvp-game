@@ -38,7 +38,7 @@ makeTextures(){
 let g=this.make.graphics({add:false});
 g.fillStyle(0x1267e8);g.fillCircle(55,52,39);
 g.fillTriangle(24,34,2,8,38,25);g.fillTriangle(32,28,14,0,49,20);g.fillTriangle(43,23,37,0,60,18);
-g.fillStyle(0xffffff);g.fillEllipse(67,51,30,22);g.fillStyle(0x171b26);g.fillCircle(73,49,4);
+g.fillStyle(0x0b4fc4);g.fillEllipse(43,45,26,18);g.fillStyle(0xffffff);g.fillEllipse(67,51,30,22);g.fillStyle(0x171b26);g.fillCircle(73,49,4);g.fillCircle(66,48,4);
 g.fillStyle(0xffffff);g.fillEllipse(48,79,27,13);g.fillStyle(0xe52d3f);
 g.fillRoundedRect(26,91,30,13,5);g.fillRoundedRect(61,91,30,13,5);
 g.generateTexture("sonic",112,112);g.destroy();
@@ -64,7 +64,7 @@ this.cameras.main.setZoom(Math.min(window.innerWidth/W,window.innerHeight/H));th
 }
 drawBackground(cfg){
 if(this.bg)this.bg.destroy();this.bg=this.add.graphics().setScrollFactor(.15);
-this.bg.fillStyle(cfg.sky);this.bg.fillRect(0,0,cfg.length+W,H);
+this.bg.fillStyle(cfg.sky);this.bg.fillRect(0,0,cfg.length+W,H);this.bg.fillStyle(cfg.ground);for(let i=0;i<cfg.length;i+=360){const y=550-Math.sin(i/420)*55;this.bg.fillRect(i,y,cfg.length>0?360:360,H-y);}
 for(let i=0;i<cfg.length;i+=220){this.bg.fillStyle(this.phaseIndex===2?0x16265f:0x3b9cda);this.bg.fillCircle(i+100,190+(i%100),90)}
 const d=this.add.graphics().setScrollFactor(.35);
 for(let i=0;i<cfg.length;i+=300){d.fillStyle(this.phaseIndex===1?0xb7a8ff:0x1f8d72);d.fillTriangle(i,530,i+150,300,i+300,530)}
@@ -82,7 +82,7 @@ this.stats=this.add.text(34,57,"RINGS 0   SCORE 0   ❤️ 3",{fontSize:"18px",c
 }
 createTouchControls(){
 const make=(x,label,fn)=>{const b=this.add.circle(x,H-70,46,0x061426,.72).setScrollFactor(0).setDepth(60).setStrokeStyle(2,0x6ff6ff);this.add.text(x,H-70,label,{fontSize:"22px",color:"#fff",fontStyle:"bold"}).setOrigin(.5).setScrollFactor(0).setDepth(61);b.setInteractive().on("pointerdown",fn)};
-make(70,"←",()=>this.player.setVelocityX(-phases[this.phaseIndex].speed));make(170,"→",()=>this.player.setVelocityX(phases[this.phaseIndex].speed));make(W-180,"JUMP",()=>this.jump());make(W-70,"BALL",()=>this.throwBall());
+make(70,"←",()=>this.player.setVelocityX(-phases[this.phaseIndex].speed));make(170,"→",()=>this.player.setVelocityX(phases[this.phaseIndex].speed));make(W-250,"JUMP",()=>this.jump());make(W-160,"BALL",()=>this.throwBall());make(W-70,"KITE",()=>this.useKite());
 }
 showIntro(){
 const a=this.add.rectangle(0,0,W,H,0x020713,.76).setOrigin(0).setScrollFactor(0).setDepth(100);

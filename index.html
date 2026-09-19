@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sonic MVP Game — Learning Prototype</title>
+<style>body{margin:0;background:#081522;color:#fff;font:16px system-ui;text-align:center}canvas{max-width:95vw;border:1px solid #18c6d8;margin:20px auto;display:block}</style>
+<h1>Runner MVP</h1><p>Learning prototype — original assets only.</p>
+<canvas id="game" width="800" height="360"></canvas>
+<script>
+const c=document.getElementById("game"),x=c.getContext("2d");let px=80,py=280,vy=0,score=0,ob=[];
+function jump(){if(py>=280)vy=-11}addEventListener("keydown",e=>{if(e.code==="Space")jump()});c.onclick=jump;
+function loop(){x.clearRect(0,0,800,360);x.fillStyle="#123";x.fillRect(0,0,800,360);x.fillStyle="#1dd";x.fillRect(0,320,800,40);vy+=.5;py+=vy;if(py>280){py=280;vy=0}if(Math.random()<.025)ob.push({x:800});ob.forEach(o=>o.x-=6);ob=ob.filter(o=>o.x>-30);x.fillStyle="#4af";x.beginPath();x.arc(px,py,22,0,7);x.fill();x.fillStyle="#f66";ob.forEach(o=>x.fillRect(o.x,285,25,35));x.fillStyle="#fff";x.fillText("Score: "+(++score),20,30);requestAnimationFrame(loop)}loop();
+</script>

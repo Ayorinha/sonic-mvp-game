@@ -1,118 +1,91 @@
-# Ayorai Speed Run 🌀
+# Ayorai 3D Speed Run 🌀
 
-Um jogo de plataforma/velocidade **HTML5 original**, desenvolvido para rodar diretamente no navegador e adaptado para **celular e desktop**.
+Um jogo **3D de velocidade para navegador**, desenvolvido para funcionar no GitHub Pages em **celular e desktop**.
 
-> Projeto independente inspirado no gênero de jogos de velocidade e plataforma. Não é um produto oficial da SEGA e não utiliza assets proprietários do Sonic.
+> Projeto original inspirado no gênero de platformers de alta velocidade. Não é um produto oficial da SEGA e não utiliza modelos ou assets proprietários do Sonic.
 
 ## 🎮 Jogar online
 
 **GitHub Pages:** https://ayorinha.github.io/sonic-mvp-game/
 
-Se o jogo ainda não abrir depois de uma atualização, aguarde o GitHub Pages concluir o deploy e recarregue a página.
+## 📱 Controles mobile
 
-## 📱 Mobile
-
-O jogo foi construído com abordagem **mobile-first**:
-
-- Controles touch na tela.
-- Layout responsivo.
-- Suporte a diferentes proporções de tela.
-- Área de jogo ocupando a tela inteira.
-- Botões grandes para facilitar o uso com o dedo.
-- Compatível com navegadores modernos de Android e iPhone.
-
-## 🕹️ Jogabilidade
-
-### Celular
-
-- **◀ / ▶** — movimentar o personagem.
+- **◀ / ▶** — trocar de faixa.
 - **⬆** — pular.
-- **⚡** — dash/aceleração.
+- **⚡** — boost de velocidade.
+- Botões grandes e posicionados dentro da área segura da tela.
+- Interface adaptada para diferentes tamanhos de smartphone.
 
-### Computador
+## 🖥️ Controles desktop
 
-- **← / →** ou **A / D** — movimentar.
+- **← / →** ou **A / D** — trocar de faixa.
 - **Space / ↑ / W** — pular.
-- **Shift** — dash.
+- **Shift** — boost.
 
 ## ✨ Recursos
 
-- Cenário 2D com sensação de profundidade.
-- Montanhas, nuvens e palmeiras.
-- Personagem original com animação.
-- Movimento e aceleração.
-- Pulo e dash.
-- Coleta de anéis/itens.
+- Mundo 3D renderizado no navegador.
+- Câmera em terceira pessoa acompanhando o personagem.
+- Personagem 3D original estilizado.
+- Pista de alta velocidade.
+- Vegetação e cenário com profundidade.
+- Anéis/coletáveis 3D.
 - Obstáculos.
-- Partículas e efeitos de velocidade.
-- Score, distância e contador de itens.
-- Canvas responsivo.
-- Funcionamento sem backend.
-- Publicação compatível com GitHub Pages.
+- Pulo e boost.
+- Pontuação.
+- Iluminação, sombras, neblina e efeitos de câmera.
+- Layout responsivo para celular.
+- Sem backend.
+- Publicação estática pelo GitHub Pages.
 
 ## 🛠️ Tecnologias
 
 - HTML5
 - CSS3
 - JavaScript
-- Canvas 2D
+- Three.js
+- WebGL
 - Responsive Web Design
 - GitHub Pages
 
+O projeto usa Three.js para a renderização 3D no navegador. A biblioteca oferece recursos WebGL e exemplos para experiências interativas 3D. citeturn0search2
+
+## ⚠️ Sobre projetos Sonic 3D
+
+Existem frameworks e fangames 3D de Sonic disponíveis publicamente. Por exemplo, o **Sonic Origins 3D** é um remake de fã e declara usar modelos/animações relacionados a Sonic; o **Badnik Framework** é um framework Godot 4/C# para fan games 3D e inclui suporte a Android. Esses projetos têm seus próprios créditos, licenças e restrições, portanto não foram simplesmente copiados para este repositório. citeturn0search0turn0search1
+
 ## ▶️ Executar localmente
 
-Clone o repositório:
+Clone:
 
 ```bash
 git clone https://github.com/Ayorinha/sonic-mvp-game.git
 cd sonic-mvp-game
-```
-
-Depois, execute um servidor local:
-
-```bash
 python -m http.server 8080
 ```
 
-Abra:
+Depois abra:
 
 ```
 http://localhost:8080
 ```
 
-Também é possível abrir o `index.html` diretamente no navegador, embora um servidor local seja recomendado durante o desenvolvimento.
+## 🌐 GitHub Pages
 
-## 🌐 Publicação no GitHub Pages
+O arquivo `index.html` está na raiz da branch `main`, permitindo publicação como site estático pelo GitHub Pages.
 
-O projeto foi estruturado como um site estático. Para publicar:
+## 📌 Objetivo
 
-1. Abra o repositório no GitHub.
-2. Entre em **Settings**.
-3. Abra **Pages**.
-4. Em **Build and deployment**, selecione **Deploy from a branch**.
-5. Escolha a branch **main**.
-6. Escolha a pasta **/(root)**.
-7. Clique em **Save**.
-8. Aguarde o GitHub gerar o endereço público.
+Projeto independente de **Anderson Leon Ayora**, explorando:
 
-O endereço deste projeto é:
-
-**https://ayorinha.github.io/sonic-mvp-game/**
-
-## 📌 Objetivo do projeto
-
-Este projeto faz parte do laboratório pessoal de desenvolvimento de software de **Anderson Leon Ayora**, explorando:
-
-- desenvolvimento de jogos para navegador;
-- interfaces responsivas;
+- desenvolvimento 3D para web;
+- interfaces mobile;
 - interação por toque;
-- animação em tempo real;
-- JavaScript e Canvas;
-- publicação contínua com GitHub Pages.
+- WebGL/Three.js;
+- física e movimento em tempo real;
+- publicação de aplicações interativas no GitHub Pages.
 
 ## 👤 Autor
 
 **Anderson Leon Ayora**  
 AI Engineer · Data Scientist · Data Architect
-
-Projeto independente para estudo e experimentação.

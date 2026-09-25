@@ -48,11 +48,11 @@ Um jogo **3D de velocidade para navegador**, desenvolvido para funcionar no GitH
 - Responsive Web Design
 - GitHub Pages
 
-O projeto usa Three.js para a renderização 3D no navegador. A biblioteca oferece recursos WebGL e exemplos para experiências interativas 3D. citeturn0search2
+O projeto usa Three.js para a renderização 3D no navegador.
 
-## ⚠️ Sobre projetos Sonic 3D
+## ⚠️ Escopo e propriedade intelectual
 
-Existem frameworks e fangames 3D de Sonic disponíveis publicamente. Por exemplo, o **Sonic Origins 3D** é um remake de fã e declara usar modelos/animações relacionados a Sonic; o **Badnik Framework** é um framework Godot 4/C# para fan games 3D e inclui suporte a Android. Esses projetos têm seus próprios créditos, licenças e restrições, portanto não foram simplesmente copiados para este repositório. citeturn0search0turn0search1
+Este é um projeto independente de aprendizado em desenvolvimento 3D para a web. Não é um produto oficial da SEGA, não utiliza assets proprietários do Sonic e não pretende reproduzir conteúdo proprietário de terceiros.
 
 ## ▶️ Executar localmente
 
